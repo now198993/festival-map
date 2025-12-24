@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>학교축제 지도</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+  html,body { margin:0; height:100%; }
+  #map { width:100%; height:100vh; }
+
+  .switch {
+    position:absolute;
+    top:10px; left:10px;
+    z-index:1000;
+    background:white;
+    padding:8px;
+    border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,.2);
+  }
+  .btn {
+    padding:6px 10px;
+    margin:2px;
+    border-radius:6px;
+    background:#eee;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .active { background:#bcd6ff; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="switch">
+  <span class="btn active" onclick="loadMap(1,this)">1,2층</span>
+  <span class="btn" onclick="loadMap(2,this)">3,4층</span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* =====================================================
+   ✅ 1. 지도 + 부스 영역 정보 (여기만 수정)
+   ===================================================== */
+const MAP_DATA = {
+  1: {
+    image: "maps/map1.png",
+    booths: [
+
+      {
+        area: [[21,92],[25,86]],
+        items: [
+          {
+            name: "AI Lab",
+            club: "수학탐구부 A,B / 융합과학탐구부",
+            poster: "posters/AI LAB1.png",
+            desc: "정말 무서운 귀신 방탈출"
+          },
+          {
+            poster:"posters/AI LAB2.png",
+            desc:"GAME PARTY"
+          }
+        ]
+      },
+
+      {
+        area: [[27,91],[33,86]],
+        items: [
+          {
+            name: "컴퓨터실",
+            club: "컴퓨터 융합 개발부 A,B",
+            poster: "posters/컴퓨터실.png",
+            desc: "플레이 그라운드"
+          }
+        ]
+      },
+
+      {
+        area: [[33,92],[37,86]],
+        items: [
+          {
+            name: "카페존",
+            club: "방송부",
+            poster: "posters/카페존.png",
+            desc: "열린 노래방"
+          }
+        ]
+      },
+
+      {
+        area: [[49,60],[53,55]],
+        items: [
+          {
+            name: "통합반2",
+            club: "여가생활부",
+            desc: "오감을 움직여라~!!"
+          }
+        ]
+      },
+
+      {
+        area: [[53,60],[56,55]],
+        items: [
+          {
+            name: "통합반1",
+            club: "요리조리부",
+            desc: "아이싱 쿠키 만들기"
+          }
+        ]
+      },
+
+      {
+        area: [[4.5,34],[14,13]],
+        items: [
+          {
+            name: "청람관",
+            club: "배드민턴부",
+            poster: "posters/청람관1.png",
+            desc: "배드민턴부를 이겨라"
+          },
+          {
+            club:"피트니스부 A,B",
+            poster:'asd',
+            desc:"도전! 기록 세우기"
+          }
+        ]
+      },
+      {
+        area: [[20,43],[26,34]],
+        items: [
+          {
+            name: "스마트 융합실",
+            club: "피지컬컴퓨팅부",
+            poster: "posters/스융실.png",
+            desc: "뭐하지?"
+          }
+        ]
+      },
+      {
+        area: [[33.5,43],[35.8,34]],
+        items: [
+          {
+            name: "오픈클래스",
+            club: "정신건강복지센터",
+            desc: "멘탈강화 프로젝트"
+          }
+        ]
+      },
+      {
+        area: [[48.6,34],[52.6,29.2]],
+        items: [
+          {
+            name: "1-7",
+            club: "입문 사회 탐구부",
+            poster: "posters/1-7.png",
+            desc: "인사 액세서리 만들기"
+          }
+        ]
+      },
+      {
+        area: [[44.6,34],[48.4,29.2]],
+        items: [
+          {
+            name: "1-8",
+            club: "시사토론부",
+            poster: "posters/1-8.png",
+            desc: "소통공작소"
+          }
+        ]
+      },
+      {
+        area: [[40.7,34],[44.5,29.2]],
+        items: [
+          {
+            name: "1-9",
+            club: "리얼라이즈",
+            poster: "posters/1-9.png",
+            desc: "HOHOHOP"
+          }
+        ]
+      },
+      {
+        area: [[29.6,32],[33.4,26.2]],
+        items: [
+          {
+            name: "1-10",
+            club: "사회 경영 경제부",
+            poster: "posters/1-10.png",
+            desc: "사랑한다. 만두를 사주겠다"
+          }
+        ]
+      },
+      {
+        area: [[18.8,32],[23.8,26.2]],
+        items: [
+          {
+            name: "메이커실",
+            club: "메이커부",
+            poster: "posters/메이커.png",
+            desc: "오감 메이킹 데이"
+          }
+        ]
+      },
+      {
+        area: [[33.7,25.8],[38.2,13]],
+        items: [
+          {
+            name: "2층 홈베이스",
+            club: "학부모회",
+            desc: "세교 분식"
+          }
+        ]
+      },
+      {
+        area: [[52.8,12.7],[56.6,7.7]],
+        items: [
+          {
+            name: "Wee 클래스",
+            club: "Wee 심리부",
+            desc: "센세Wee션"
+          }
+        ]
+      },
+      {
+        area: [[33.6,29],[36.6,26.2]],
+        items: [
+          {
+            name: "오픈스튜디오",
+            desc: "모닥불 타로 상담"
+          }
+        ]
+      },
+      
+
+    ]
+  },
+
+  2: {
+    image: "maps/map2.png",
+    booths: [
+      {
+        area: [[56.8,57],[61.6,52]],
+        items: [
+          {
+            name: "중앙무대",
+            club: "공연부",
+            poster: "posters/booth3.png",
+            desc: "밴드 공연"
+          }
+        ]
+      },
+      {
+        area: [[52.3,57],[56.5,51.9]],
+        items: [
+          {
+            name: "3-7",
+            club: "영어 회화부",
+            poster: "posters/3-7.png",
+            desc: "영어로 말해요"
+          }
+        ]
+      },
+      {
+        area: [[46.5,57],[52,51.9]],
+        items: [
+          {
+            name: "3-8",
+            club: "문학 창작부",
+            poster: "posters/3-8.png",
+            desc: "나만의 책 만들기"
+          }
+        ]
+      },
+      {
+        area: [[32.2,34],[37,28]],
+        items: [
+          {
+            name: "3-9",
+            club: "역사 탐구부",
+            poster: "posters/3-9.png",
+            desc: "역사 퀴즈 대회"
+          }
+        ]
+      },
+    ]
+  }
+};
+
+
+/* =====================================================
+   ❌ 아래는 수정 안 해도 됨
+   ===================================================== */
+
+let map = L.map('map', {
+  crs: L.CRS.Simple,
+  minZoom: -2,
+  maxZoom: 4,
+  attributionControl:false
+});
+
+let imageLayer;
+let boothLayer = L.layerGroup().addTo(map);
+let imgW, imgH;
+
+// 퍼센트 → Leaflet 좌표
+function toLatLng(x,y){
+  return L.latLng((y/100)*imgH,(x/100)*imgW);
+}
+
+// 지도 불러오기
+function loadMap(num,btn){
+  const data = MAP_DATA[num];
+
+  document.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const img = new Image();
+  img.src = data.image;
+
+  img.onload = ()=>{
+    imgW = img.naturalWidth;
+    imgH = img.naturalHeight;
+    const bounds = [[0,0],[imgH,imgW]];
+
+    if(imageLayer) map.removeLayer(imageLayer);
+    boothLayer.clearLayers();
+
+    imageLayer = L.imageOverlay(data.image,bounds).addTo(map);
+    map.fitBounds(bounds);
+
+    // ✅ 부스 영역(사각형) 생성
+    data.booths.forEach(b=>{
+      const p1 = toLatLng(b.area[0][0], b.area[0][1]);
+      const p2 = toLatLng(b.area[1][0], b.area[1][1]);
+
+      const rect = L.rectangle([p1,p2], {
+        color: "transparent", // 🔧 테스트 중엔 "red" 추천
+        weight: 0,
+        fillOpacity: 0
+      }).addTo(boothLayer);
+
+      rect.bindPopup(
+        b.items.map(item => `
+            <div style="margin-bottom:14px;">
+
+                ${item.name ? `<b>${item.name}</b><br>` : ``}
+
+                ${item.club ? `
+                    <span style="font-size:13px; color:#555;">
+                        동아리: ${item.club}
+                    </span><br><br>
+                ` : ``}
+
+                ${item.poster ? `
+                    <img src="${item.poster}" style="width:220px"><br>
+                ` : ``}
+
+                ${item.desc ? `
+                    <div>${item.desc}</div>
+                ` : ``}
+
+            </div>
+            <hr>
+        `).join('')
+);
+
+
+    });
+  };
+}
+
+// 처음 지도
+loadMap(1, document.querySelector('.btn'));
+
+/* =====================================================
+   ✅ 좌표 확인용 (영역 잡을 때만 사용)
+   ===================================================== */
+map.on('click', function(e){
+  if(!imgW || !imgH) return;
+
+  const x = (e.latlng.lng / imgW * 100).toFixed(1);
+  const y = (e.latlng.lat / imgH * 100).toFixed(1);
+
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(`
+      <b>퍼센트 좌표</b><br>
+      x: ${x}%<br>
+      y: ${y}%
+    `)
+    .openOn(map);
+
+  console.log(`[${x}, ${y}]`);
+});
+</script>
+
+</body>
+</html>
